@@ -1,20 +1,41 @@
 {
-  "name": "apitakehomeassignmentultimateqa",
+  "name": "api-testing-framework-ultimateqa",
   "version": "1.0.0",
-  "description": "",
+  "description": "Enterprise-grade API testing framework with TypeScript, Playwright, and comprehensive test management",
   "main": "index.js",
   "scripts": {
-    
+    "test": "npx playwright test",
+    "test:functional": "npx playwright test src/tests/functional",
+    "test:integration": "npx playwright test src/tests/integration",
+    "test:advanced": "npx playwright test src/tests/advanced",
+    "test:debug": "npx playwright test --debug",
+    "report": "npx playwright show-report",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf test-results playwright-report logs",
+    "install:browsers": "npx playwright install --with-deps"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "api-testing",
+    "playwright",
+    "typescript",
+    "automation",
+    "testing-framework"
+  ],
+  "author": "Albert AK",
+  "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.52.0",
-    "@types/node": "^22.15.21"
+    "@types/node": "^22.15.21",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
   },
   "dependencies": {
     "@faker-js/faker": "^9.8.0",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "winston": "^3.11.0"
   }
 }
