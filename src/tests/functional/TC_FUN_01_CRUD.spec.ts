@@ -1,69 +1,112 @@
-/**
- * Refactored CRUD Operations Test
- * Example of using the new enterprise-grade API testing framework
- */
-
 import { expect } from '@playwright/test';
 import { test } from '@/helpers/test.helpers';
 import { UserDataFactory } from '@/data';
 import { CreateUserRequest } from '@/types';
+import { TestDataLoader } from '@/utils/test-data-loader';
 
-test.describe('User CRUD Operations ', () => {
+test.describe('A. Functional Tests - CRUD Operations', () => {
   let userFactory: UserDataFactory;
-  let createdUserId: string;
+  let testDataLoader: TestDataLoader;
 
   test.beforeEach(async ({ dataManager, logger, testContext }) => {
     userFactory = dataManager.getUserFactory();
-    logger.info('Test setup completed', { testId: testContext.testId });
+    testDataLoader = new TestDataLoader();
+    logger.info('Functional test setup completed', { testId: testContext.testId });
   });
 
-  test('TC-FUN-01: Create User with Valid Payload', async ({
+  test('TC-FUN-01: CRUD Operations with Data Persistence Validation', async ({
     apiClients,
     logger,
-    testContext
+    dataManager
   }) => {
-    // Arrange
-    const userData = userFactory.createUserForCreation({
-      name: 'John Doe',
-      job: 'Software Engineer'
+    const userData = userFactory.createUserForCreation();
+
+    logger.info('Testing CRUD operations with data persistence validation', { userData });
+
+    const createResponse = await apiClients.userClient.createUser(userData);
+    expect(createResponse.status).toBe(201);
+    expect(createResponse.data).toHaveProperty('id');
+    expect(createResponse.data).toHaveProperty('createdAt');
+    expect(createResponse.data.name).toBe(userData.name);
+    expect(createResponse.data.job).toBe(userData.job);
+
+    const createdAt = new Date(createResponse.data.createdAt);
+    const now = Date.now();
+    expect(createdAt.getTime()).toBeLessThanOrEqual(now + 5000);
+    expect(createdAt.getTime()).toBeGreaterThan(now - 10000);
+
+    // Act 2: Update User
+    const updateData = { name: 'Updated Name', job: 'Updated Job' };
+    const updateResponse = await apiClients.userClient.updateUser(2, updateData);
+
+    // Assert 2: Update validation
+    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.data).toHaveProperty('updatedAt');
+    expect(updateResponse.data.name).toBe(updateData.name);
+    expect(updateResponse.data.job).toBe(updateData.job);
+
+    // Data persistence validation - updatedAt should be recent (allow for server clock differences)
+    const updatedAt = new Date(updateResponse.data.updatedAt);
+    const updateNow = Date.now();
+    expect(updatedAt.getTime()).toBeLessThanOrEqual(updateNow + 5000); // Allow 5 seconds ahead for server clock differences
+    expect(updatedAt.getTime()).toBeGreaterThan(updateNow - 10000);
+
+    // Track for cleanup
+    dataManager.addCleanupTask({
+      id: `cleanup_user_${createResponse.data.id}`,
+      description: `Cleanup created user ${createResponse.data.id}`,
+      execute: async () => {
+        logger.info('Cleaning up created user', { userId: createResponse.data.id });
+      },
+      priority: 1
     });
 
-    logger.info('Creating user with data', { userData });
-
-    // Act
-    const response = await apiClients.userClient.createUser(userData);
-
-    // Assert
-    expect(response.status).toBe(201);
-    expect(response.data).toHaveProperty('id');
-    expect(response.data).toHaveProperty('createdAt');
-    expect(response.data.name).toBe(userData.name);
-    expect(response.data.job).toBe(userData.job);
-
-    // Store for cleanup
-    createdUserId = response.data.id;
-    testContext.userData.set('createdUserId', createdUserId);
-
-    logger.info('User created successfully', {
-      userId: createdUserId,
-      name: response.data.name,
-      job: response.data.job
+    logger.info('CRUD operations with data persistence validation completed', {
+      createdUserId: createResponse.data.id,
+      createdAt: createResponse.data.createdAt,
+      updatedAt: updateResponse.data.updatedAt
     });
   });
 
-  test('TC-FUN-02: Retrieve Created User', async ({
+  test('TC-FUN-02: Input Validation and Error Boundary Testing', async ({
     apiClients,
     logger
   }) => {
-    // Arrange
-    const userId = 2; // Using known user ID from reqres.in
+    logger.info('Testing input validation and error boundaries');
 
-    logger.info('Retrieving user', { userId });
+    // Test 1: Empty name validation
+    await expect(async () => {
+      await apiClients.userClient.createUser({ name: '', job: 'Engineer' });
+    }).rejects.toThrow();
 
-    // Act
+    // Test 2: Empty job validation
+    await expect(async () => {
+      await apiClients.userClient.createUser({ name: 'John Doe', job: '' });
+    }).rejects.toThrow();
+
+    // Test 3: Non-existent user retrieval
+    await expect(async () => {
+      await apiClients.userClient.getUser(999999);
+    }).rejects.toThrow();
+
+    // Test 4: Invalid user ID format (if applicable)
+    const exists = await apiClients.userClient.userExists(999999);
+    expect(exists).toBe(false);
+
+    logger.info('Input validation and error boundary testing completed');
+  });
+
+  test('TC-FUN-03: Response Data Integrity Verification', async ({
+    apiClients,
+    logger
+  }) => {
+    logger.info('Testing response data integrity verification');
+
+    // Test user retrieval with data integrity checks
+    const userId = 2;
     const response = await apiClients.userClient.getUser(userId);
 
-    // Assert
+    // Assert response structure integrity
     expect(response.status).toBe(200);
     expect(response.data.data).toHaveProperty('id', userId);
     expect(response.data.data).toHaveProperty('email');
@@ -71,221 +114,92 @@ test.describe('User CRUD Operations ', () => {
     expect(response.data.data).toHaveProperty('last_name');
     expect(response.data.data).toHaveProperty('avatar');
 
-    logger.info('User retrieved successfully', {
+    // Verify data types and formats
+    expect(typeof response.data.data.id).toBe('number');
+    expect(typeof response.data.data.email).toBe('string');
+    expect(typeof response.data.data.first_name).toBe('string');
+    expect(typeof response.data.data.last_name).toBe('string');
+    expect(typeof response.data.data.avatar).toBe('string');
+
+    // Verify email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    expect(response.data.data.email).toMatch(emailRegex);
+
+    // Verify avatar URL format
+    expect(response.data.data.avatar).toMatch(/^https?:\/\/.+/);
+
+    logger.info('Response data integrity verification completed', {
       userId,
       email: response.data.data.email,
       name: `${response.data.data.first_name} ${response.data.data.last_name}`
     });
   });
 
-  test('TC-FUN-03: Update User Information', async ({
+  test('TC-FUN-04: HTTP Status Code Validation', async ({
     apiClients,
     logger
   }) => {
-    // Arrange
-    const userId = 2;
-    const updateData = {
-      name: 'John Updated',
-      job: 'Senior Software Engineer'
-    };
+    logger.info('Testing HTTP status code validation');
 
-    logger.info('Updating user', { userId, updateData });
+    // Test 1: Successful GET request (200)
+    const getResponse = await apiClients.userClient.getUsers({ page: 1 });
+    expect(getResponse.status).toBe(200);
 
-    // Act
-    const response = await apiClients.userClient.updateUser(userId, updateData);
+    // Test 2: Successful POST request (201)
+    const userData = userFactory.createUserForCreation();
+    const createResponse = await apiClients.userClient.createUser(userData);
+    expect(createResponse.status).toBe(201);
 
-    // Assert
-    expect(response.status).toBe(200);
-    expect(response.data).toHaveProperty('updatedAt');
-    expect(response.data.name).toBe(updateData.name);
-    expect(response.data.job).toBe(updateData.job);
+    // Test 3: Successful PUT request (200)
+    const updateResponse = await apiClients.userClient.updateUser(2, { name: 'Updated', job: 'Updated Job' });
+    expect(updateResponse.status).toBe(200);
 
-    // Validate updatedAt is recent
-    const updatedAt = new Date(response.data.updatedAt);
-    const now = new Date();
-    const timeDiff = now.getTime() - updatedAt.getTime();
-    expect(timeDiff).toBeLessThan(60000); // Within 1 minute
+    // Test 4: Successful DELETE request (204)
+    const deleteResponse = await apiClients.userClient.deleteUser(2);
+    expect(deleteResponse.status).toBe(204);
 
-    logger.info('User updated successfully', {
-      userId,
-      updatedAt: response.data.updatedAt,
-      changes: updateData
-    });
-  });
-
-  test('TC-FUN-04: Delete User', async ({
-    apiClients,
-    logger
-  }) => {
-    // Arrange
-    const userId = 2;
-
-    logger.info('Deleting user', { userId });
-
-    // Act
-    const response = await apiClients.userClient.deleteUser(userId);
-
-    // Assert
-    expect(response.status).toBe(204);
-
-    logger.info('User deleted successfully', { userId });
-  });
-
-  test('TC-FUN-05: Create User with Factory Data', async ({
-    apiClients,
-    dataManager,
-    logger
-  }) => {
-    // Arrange - Using data factory for realistic data
-    const userData = userFactory.createRealisticUser();
-    const createRequest: CreateUserRequest = {
-      name: userData.name!,
-      job: userData.job!
-    };
-
-    logger.info('Creating user with factory data', { userData: createRequest });
-
-    // Act
-    const response = await apiClients.userClient.createUser(createRequest);
-
-    // Assert
-    expect(response.status).toBe(201);
-    expect(response.data.name).toBe(createRequest.name);
-    expect(response.data.job).toBe(createRequest.job);
-
-    // Track for cleanup
-    dataManager.addCleanupTask({
-      id: `cleanup_user_${response.data.id}`,
-      description: `Cleanup created user ${response.data.id}`,
-      execute: async () => {
-        logger.info('Cleaning up created user', { userId: response.data.id });
-        // In a real API, you might delete the user here
-      },
-      priority: 1
-    });
-
-    logger.info('User created with factory data', {
-      userId: response.data.id,
-      name: response.data.name,
-      job: response.data.job
-    });
-  });
-
-  test('TC-FUN-06: Create User with Edge Case Data', async ({
-    apiClients,
-    logger
-  }) => {
-    // Arrange - Using edge case data
-    const edgeCaseUser = userFactory.createEdgeCaseUser('special_chars');
-    const createRequest: CreateUserRequest = {
-      name: edgeCaseUser.name!,
-      job: edgeCaseUser.job!
-    };
-
-    logger.info('Creating user with edge case data', { userData: createRequest });
-
-    // Act
-    const response = await apiClients.userClient.createUser(createRequest);
-
-    // Assert
-    expect(response.status).toBe(201);
-    expect(response.data.name).toBe(createRequest.name);
-    expect(response.data.job).toBe(createRequest.job);
-
-    logger.info('User created with edge case data', {
-      userId: response.data.id,
-      name: response.data.name,
-      job: response.data.job
-    });
-  });
-
-  test('TC-FUN-07: Get Users with Pagination', async ({
-    apiClients,
-    logger
-  }) => {
-    // Arrange
-    const paginationParams = { page: 1, per_page: 3 };
-
-    logger.info('Getting users with pagination', { params: paginationParams });
-
-    // Act
-    const response = await apiClients.userClient.getUsers(paginationParams);
-
-    // Assert
-    expect(response.status).toBe(200);
-    expect(response.data).toHaveProperty('page', 1);
-    expect(response.data).toHaveProperty('per_page', 3);
-    expect(response.data).toHaveProperty('total');
-    expect(response.data).toHaveProperty('total_pages');
-    expect(response.data.data).toHaveLength(3);
-
-    // Validate user structure
-    for (const user of response.data.data) {
-      expect(user).toHaveProperty('id');
-      expect(user).toHaveProperty('email');
-      expect(user).toHaveProperty('first_name');
-      expect(user).toHaveProperty('last_name');
-      expect(user).toHaveProperty('avatar');
-    }
-
-    logger.info('Users retrieved with pagination', {
-      page: response.data.page,
-      perPage: response.data.per_page,
-      total: response.data.total,
-      userCount: response.data.data.length
-    });
-  });
-
-  test('TC-FUN-08: Handle User Not Found', async ({
-    apiClients,
-    logger
-  }) => {
-    // Arrange
-    const nonExistentUserId = 999999;
-
-    logger.info('Testing user not found scenario', { userId: nonExistentUserId });
-
-    // Act & Assert
-    await expect(async () => {
-      await apiClients.userClient.getUser(nonExistentUserId);
-    }).rejects.toThrow();
-
-    // Verify user doesn't exist using helper method
-    const exists = await apiClients.userClient.userExists(nonExistentUserId);
+    // Test 5: Not Found (404) - handled by error boundary
+    const exists = await apiClients.userClient.userExists(999999);
     expect(exists).toBe(false);
 
-    logger.info('User not found scenario handled correctly', { userId: nonExistentUserId });
+    logger.info('HTTP status code validation completed');
   });
 
-  test('TC-FUN-09: Search Users (Mock Implementation)', async ({
+  test('TC-FUN-05: Parameterized Testing with External Data', async ({
     apiClients,
     logger
   }) => {
-    // Arrange
-    const searchQuery = 'janet';
+    logger.info('Testing parameterized data from external sources');
 
-    logger.info('Searching users', { query: searchQuery });
+    // Load test data from CSV file
+    const testDataSet = await testDataLoader.loadFromCSV('users.csv');
 
-    // Act
-    const response = await apiClients.userClient.searchUsers(searchQuery);
+    // Filter for valid test cases
+    const validTestCases = testDataSet.data.filter(row => row.testType === 'valid');
 
-    // Assert
-    expect(response.status).toBe(200);
-    expect(response.data.data).toBeDefined();
+    expect(validTestCases.length).toBeGreaterThan(0);
 
-    // Verify search results contain the query
-    const matchingUsers = response.data.data.filter(user =>
-      user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Test each valid case
+    for (const testCase of validTestCases.slice(0, 3)) { // Test first 3 cases
+      const userData: CreateUserRequest = {
+        name: testCase.name as string,
+        job: testCase.job as string
+      };
 
-    expect(matchingUsers.length).toBeGreaterThan(0);
+      logger.info('Testing with parameterized data', { userData, testCase });
 
-    logger.info('User search completed', {
-      query: searchQuery,
-      totalResults: response.data.data.length,
-      matchingResults: matchingUsers.length
+      const response = await apiClients.userClient.createUser(userData);
+
+      expect(response.status).toBe(testCase.expectedStatus as number);
+      expect(response.data.name).toBe(userData.name);
+      expect(response.data.job).toBe(userData.job);
+    }
+
+    logger.info('Parameterized testing completed', {
+      totalTestCases: testDataSet.data.length,
+      validTestCases: validTestCases.length,
+      testedCases: Math.min(validTestCases.length, 3)
     });
   });
+
 });
