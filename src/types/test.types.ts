@@ -1,11 +1,4 @@
-/**
- * Test Types and Interfaces
- * Type definitions for test data, fixtures, and test utilities
- */
-
 import { User, Resource } from './api.types';
-
-// Test Data Types
 export interface TestUser extends Omit<User, 'id'> {
   password?: string;
   confirmPassword?: string;
@@ -15,7 +8,6 @@ export interface TestResource extends Omit<Resource, 'id'> {
   description?: string;
 }
 
-// Test Case Metadata
 export interface TestCaseMetadata {
   id: string;
   title: string;
@@ -28,7 +20,6 @@ export interface TestCaseMetadata {
   estimatedDuration: number; // in milliseconds
 }
 
-// Test Result Types
 export interface TestResult {
   testId: string;
   status: 'passed' | 'failed' | 'skipped' | 'timeout';
@@ -50,7 +41,6 @@ export interface TestStep {
   attachments?: string[];
 }
 
-// Test Data Factory Types
 export interface UserFactory {
   createUser(overrides?: Partial<TestUser>): TestUser;
   createUsers(count: number, overrides?: Partial<TestUser>): TestUser[];
@@ -65,7 +55,6 @@ export interface ResourceFactory {
   createInvalidResource(): TestResource;
 }
 
-// Test Fixture Types
 export interface TestFixture<T = any> {
   name: string;
   data: T;
@@ -86,7 +75,6 @@ export interface ResourceFixtures {
   popularResources: TestFixture<TestResource[]>;
 }
 
-// Test Context Types
 export interface TestContext {
   testId: string;
   environment: string;
@@ -95,7 +83,6 @@ export interface TestContext {
   cleanup: (() => Promise<void>)[];
 }
 
-// Performance Metrics
 export interface PerformanceMetrics {
   responseTime: number;
   throughput: number;
@@ -104,7 +91,6 @@ export interface PerformanceMetrics {
   p99ResponseTime: number;
 }
 
-// Test Report Types
 export interface TestReport {
   summary: {
     total: number;
@@ -119,7 +105,6 @@ export interface TestReport {
   timestamp: Date;
 }
 
-// Data Validation Types
 export interface ValidationRule<T = any> {
   field: keyof T;
   rule: 'required' | 'email' | 'minLength' | 'maxLength' | 'pattern' | 'custom';
@@ -133,7 +118,6 @@ export interface ValidationResult {
   errors: string[];
 }
 
-// Test Cleanup Types
 export interface CleanupTask {
   id: string;
   description: string;
@@ -141,7 +125,6 @@ export interface CleanupTask {
   priority: number;
 }
 
-// Mock Data Types
 export interface MockResponse<T = any> {
   status: number;
   data: T;

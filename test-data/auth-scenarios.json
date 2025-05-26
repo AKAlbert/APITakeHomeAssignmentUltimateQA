@@ -1,0 +1,102 @@
+{
+  "name": "Authentication Test Scenarios",
+  "description": "Comprehensive authentication test data for various scenarios",
+  "data": [
+    {
+      "scenario": "valid_login",
+      "email": "eve.holt@reqres.in",
+      "password": "cityslicka",
+      "expectedStatus": 200,
+      "shouldSucceed": true,
+      "description": "Valid login credentials"
+    },
+    {
+      "scenario": "valid_registration",
+      "email": "eve.holt@reqres.in",
+      "password": "pistol",
+      "expectedStatus": 200,
+      "shouldSucceed": true,
+      "description": "Valid registration credentials"
+    },
+    {
+      "scenario": "missing_password_login",
+      "email": "peter@klaven",
+      "password": "",
+      "expectedStatus": 400,
+      "shouldSucceed": false,
+      "description": "Login with missing password"
+    },
+    {
+      "scenario": "missing_password_registration",
+      "email": "sydney@fife",
+      "password": "",
+      "expectedStatus": 400,
+      "shouldSucceed": false,
+      "description": "Registration with missing password"
+    },
+    {
+      "scenario": "invalid_email_format",
+      "email": "invalid-email",
+      "password": "password123",
+      "expectedStatus": 400,
+      "shouldSucceed": false,
+      "description": "Invalid email format"
+    },
+    {
+      "scenario": "empty_email",
+      "email": "",
+      "password": "password123",
+      "expectedStatus": 400,
+      "shouldSucceed": false,
+      "description": "Empty email field"
+    },
+    {
+      "scenario": "sql_injection_email",
+      "email": "admin'; DROP TABLE users; --",
+      "password": "password123",
+      "expectedStatus": 400,
+      "shouldSucceed": false,
+      "description": "SQL injection attempt in email"
+    },
+    {
+      "scenario": "xss_attempt_email",
+      "email": "<script>alert('xss')</script>@example.com",
+      "password": "password123",
+      "expectedStatus": 400,
+      "shouldSucceed": false,
+      "description": "XSS attempt in email field"
+    },
+    {
+      "scenario": "very_long_email",
+      "email": "verylongemailaddressthatexceedsnormallimitsandshouldbetestedforboundaryconditions@verylongdomainnamethatalsotestsboundaries.com",
+      "password": "password123",
+      "expectedStatus": 400,
+      "shouldSucceed": false,
+      "description": "Very long email address"
+    },
+    {
+      "scenario": "very_long_password",
+      "email": "test@example.com",
+      "password": "verylongpasswordthatexceedsnormallimitsandshouldbetestedforboundaryconditionsandpasswordpolicies",
+      "expectedStatus": 400,
+      "shouldSucceed": false,
+      "description": "Very long password"
+    },
+    {
+      "scenario": "unicode_credentials",
+      "email": "测试@example.com",
+      "password": "密码123",
+      "expectedStatus": 400,
+      "shouldSucceed": false,
+      "description": "Unicode characters in credentials"
+    },
+    {
+      "scenario": "special_characters_password",
+      "email": "test@example.com",
+      "password": "!@#$%^&*()_+-=[]{}|;:,.<>?",
+      "expectedStatus": 400,
+      "shouldSucceed": false,
+      "description": "Special characters in password"
+    }
+  ]
+}

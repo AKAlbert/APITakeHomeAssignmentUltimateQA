@@ -5,16 +5,22 @@
   "main": "index.js",
   "scripts": {
     "test": "npx playwright test",
-    "test:functional": "npx playwright test src/tests/functional",
-    "test:integration": "npx playwright test src/tests/integration",
-    "test:advanced": "npx playwright test src/tests/advanced",
+    "test:all": "npm run test:functional && npm run test:integration && npm run test:advanced",
+    "test:functional": "npx playwright test src/tests/functional --reporter=html",
+    "test:integration": "npx playwright test src/tests/integration --reporter=html",
+    "test:advanced": "npx playwright test src/tests/advanced --reporter=html",
+    "test:parallel": "npx playwright test --workers=3",
     "test:debug": "npx playwright test --debug",
+    "test:headed": "npx playwright test --headed",
+    "test:trace": "npx playwright test --trace=on",
     "report": "npx playwright show-report",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf test-results playwright-report logs",
-    "install:browsers": "npx playwright install --with-deps"
+    "clean:all": "npm run clean && rm -rf node_modules package-lock.json",
+    "install:browsers": "npx playwright install --with-deps",
+    "setup": "npm install && npm run install:browsers"
   },
   "keywords": [
     "api-testing",

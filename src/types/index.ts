@@ -1,15 +1,5 @@
-/**
- * Type Definitions Index
- * Central export point for all type definitions
- */
-
-// API Types
 export * from './api.types';
-
-// Configuration Types
 export * from './config.types';
-
-// Test Types
 export * from './test.types';
 
 // Re-export commonly used types for convenience

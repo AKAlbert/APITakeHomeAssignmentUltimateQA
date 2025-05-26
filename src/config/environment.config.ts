@@ -1,17 +1,8 @@
-/**
- * Environment Configuration Management
- * Handles different environment configurations and settings
- */
-
 import * as dotenv from 'dotenv';
 import { Environment, EnvironmentConfig, EnvironmentVariables } from '@/types';
 
-// Load environment variables
 dotenv.config();
 
-/**
- * Get environment variables with type safety
- */
 export const getEnvVars = (): EnvironmentVariables => {
   return {
     NODE_ENV: (process.env.NODE_ENV as Environment) || 'development',
@@ -26,9 +17,7 @@ export const getEnvVars = (): EnvironmentVariables => {
   };
 };
 
-/**
- * Environment-specific configurations
- */
+
 const environments: Record<Environment, EnvironmentConfig> = {
   development: {
     name: 'development',
@@ -43,7 +32,7 @@ const environments: Record<Environment, EnvironmentConfig> = {
     },
     rateLimit: {
       requests: 100,
-      window: 60000 // 1 minute
+      window: 60000
     }
   },
 
@@ -94,17 +83,11 @@ const environments: Record<Environment, EnvironmentConfig> = {
   }
 };
 
-/**
- * Get current environment configuration
- */
 export const getCurrentEnvironment = (): Environment => {
   const envVars = getEnvVars();
   return envVars.NODE_ENV || 'development';
 };
 
-/**
- * Get configuration for specific environment
- */
 export const getEnvironmentConfig = (env?: Environment): EnvironmentConfig => {
   const environment = env || getCurrentEnvironment();
   const config = environments[environment];
@@ -113,7 +96,6 @@ export const getEnvironmentConfig = (env?: Environment): EnvironmentConfig => {
     throw new Error(`Unknown environment: ${environment}`);
   }
 
-  // Override with environment variables if provided
   const envVars = getEnvVars();
   
   return {
@@ -129,9 +111,6 @@ export const getEnvironmentConfig = (env?: Environment): EnvironmentConfig => {
   };
 };
 
-/**
- * Validate environment configuration
- */
 export const validateEnvironmentConfig = (config: EnvironmentConfig): boolean => {
   const requiredFields = ['name', 'baseURL', 'timeout', 'retries', 'retryDelay'];
   
@@ -141,14 +120,12 @@ export const validateEnvironmentConfig = (config: EnvironmentConfig): boolean =>
     }
   }
 
-  // Validate URL format
   try {
     new URL(config.baseURL);
   } catch {
     throw new Error(`Invalid baseURL format: ${config.baseURL}`);
   }
 
-  // Validate numeric values
   if (config.timeout <= 0) {
     throw new Error('Timeout must be greater than 0');
   }
@@ -164,16 +141,10 @@ export const validateEnvironmentConfig = (config: EnvironmentConfig): boolean =>
   return true;
 };
 
-/**
- * Get all available environments
- */
 export const getAvailableEnvironments = (): Environment[] => {
   return Object.keys(environments) as Environment[];
 };
 
-/**
- * Check if environment is valid
- */
 export const isValidEnvironment = (env: string): env is Environment => {
   return getAvailableEnvironments().includes(env as Environment);
 };

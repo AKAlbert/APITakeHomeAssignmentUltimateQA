@@ -1,8 +1,3 @@
-/**
- * User API Client
- * Specialized client for user-related API operations
- */
-
 import { APIRequestContext } from '@playwright/test';
 import { BaseApiClient } from '@/core/base-api-client';
 import {
@@ -22,9 +17,6 @@ export class UserClient extends BaseApiClient {
     super(config, requestContext);
   }
 
-  /**
-   * Get list of users with pagination
-   */
   async getUsers(params?: PaginationParams): Promise<ApiResponse<UserListResponse>> {
     this.logger.info('Getting users list', { params });
 
@@ -39,9 +31,6 @@ export class UserClient extends BaseApiClient {
     return response;
   }
 
-  /**
-   * Get single user by ID
-   */
   async getUser(userId: number): Promise<ApiResponse<SingleUserResponse>> {
     this.logger.info('Getting user by ID', { userId });
 
@@ -56,13 +45,9 @@ export class UserClient extends BaseApiClient {
     return response;
   }
 
-  /**
-   * Create new user
-   */
   async createUser(userData: CreateUserRequest): Promise<ApiResponse<CreateUserResponse>> {
     this.logger.info('Creating new user', { userData });
 
-    // Validate required fields
     this.validateCreateUserRequest(userData);
 
     const response = await this.post<CreateUserResponse>('/api/users', userData);
@@ -77,13 +62,9 @@ export class UserClient extends BaseApiClient {
     return response;
   }
 
-  /**
-   * Update existing user
-   */
   async updateUser(userId: number, userData: UpdateUserRequest): Promise<ApiResponse<UpdateUserResponse>> {
     this.logger.info('Updating user', { userId, userData });
 
-    // Validate user ID
     if (!userId || userId <= 0) {
       throw new Error('Valid user ID is required for update operation');
     }
@@ -99,13 +80,9 @@ export class UserClient extends BaseApiClient {
     return response;
   }
 
-  /**
-   * Partially update user
-   */
   async patchUser(userId: number, userData: Partial<UpdateUserRequest>): Promise<ApiResponse<UpdateUserResponse>> {
     this.logger.info('Partially updating user', { userId, userData });
 
-    // Validate user ID
     if (!userId || userId <= 0) {
       throw new Error('Valid user ID is required for patch operation');
     }
@@ -121,13 +98,9 @@ export class UserClient extends BaseApiClient {
     return response;
   }
 
-  /**
-   * Delete user
-   */
   async deleteUser(userId: number): Promise<ApiResponse<void>> {
     this.logger.info('Deleting user', { userId });
 
-    // Validate user ID
     if (!userId || userId <= 0) {
       throw new Error('Valid user ID is required for delete operation');
     }
@@ -139,9 +112,7 @@ export class UserClient extends BaseApiClient {
     return response;
   }
 
-  /**
-   * Check if user exists
-   */
+  // Check if user exists by attempting to fetch them
   async userExists(userId: number): Promise<boolean> {
     try {
       await this.getUser(userId);
@@ -154,9 +125,7 @@ export class UserClient extends BaseApiClient {
     }
   }
 
-  /**
-   * Get users with delay (for testing purposes)
-   */
+  // Get users with delay for testing timeout scenarios
   async getUsersWithDelay(delay: number = 3, params?: PaginationParams): Promise<ApiResponse<UserListResponse>> {
     this.logger.info('Getting users with delay', { delay, params });
 
@@ -164,9 +133,6 @@ export class UserClient extends BaseApiClient {
     return this.getUsers(queryParams);
   }
 
-  /**
-   * Validate create user request
-   */
   private validateCreateUserRequest(userData: CreateUserRequest): void {
     if (!userData.name || userData.name.trim().length === 0) {
       throw new Error('User name is required and cannot be empty');
@@ -185,14 +151,10 @@ export class UserClient extends BaseApiClient {
     }
   }
 
-  /**
-   * Search users by name (mock implementation for demonstration)
-   */
+  // Search users by name - filters client-side for demo API
   async searchUsers(query: string, params?: PaginationParams): Promise<ApiResponse<UserListResponse>> {
     this.logger.info('Searching users', { query, params });
 
-    // In a real API, this would be a search endpoint
-    // For demo purposes, we'll get all users and filter client-side
     const response = await this.getUsers(params);
 
     if (query && query.trim().length > 0) {

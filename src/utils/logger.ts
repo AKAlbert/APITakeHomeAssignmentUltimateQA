@@ -1,8 +1,3 @@
-/**
- * Logger Utility
- * Centralized logging with different levels and formats
- */
-
 import * as winston from 'winston';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -20,11 +15,7 @@ export class Logger {
     this.winston = this.createWinstonLogger();
   }
 
-  /**
-   * Create Winston logger instance
-   */
   private createWinstonLogger(): winston.Logger {
-    // Ensure logs directory exists
     if (this.config.filename) {
       const logDir = path.dirname(this.config.filename);
       if (!fs.existsSync(logDir)) {
@@ -34,17 +25,14 @@ export class Logger {
 
     const formats: any[] = [];
 
-    // Add timestamp if enabled
     if (this.config.timestamp) {
       formats.push(winston.format.timestamp());
     }
 
-    // Add colorization for console output
     if (this.config.colorize) {
       formats.push(winston.format.colorize());
     }
 
-    // Add format based on configuration
     if (this.config.format === 'json') {
       formats.push(winston.format.json());
     } else {
@@ -63,7 +51,6 @@ export class Logger {
       })
     ];
 
-    // Add file transport if filename is specified
     if (this.config.filename) {
       transports.push(
         new winston.transports.File({
@@ -92,9 +79,6 @@ export class Logger {
     });
   }
 
-  /**
-   * Parse size string to bytes
-   */
   private parseSize(size: string): number {
     const units: Record<string, number> = {
       'b': 1,
@@ -105,16 +89,13 @@ export class Logger {
 
     const match = size.toLowerCase().match(/^(\d+)([bkmg]?)$/);
     if (!match) {
-      return 10 * 1024 * 1024; // Default 10MB
+      return 10 * 1024 * 1024;
     }
 
     const [, num, unit] = match;
     return parseInt(num) * (units[unit] || 1);
   }
 
-  /**
-   * Log methods
-   */
   error(message: string, meta?: any): void {
     this.winston.error(message, { context: this.context, ...meta });
   }
@@ -135,24 +116,16 @@ export class Logger {
     this.winston.verbose(message, { context: this.context, ...meta });
   }
 
-  /**
-   * Log with specific level
-   */
   log(level: LogLevel, message: string, meta?: any): void {
     this.winston.log(level, message, { context: this.context, ...meta });
   }
 
-  /**
-   * Create child logger with different context
-   */
   child(context: string): Logger {
     const childLogger = new Logger(context);
     return childLogger;
   }
 
-  /**
-   * Log API request
-   */
+  // Log API request with structured data for debugging
   logRequest(method: string, url: string, data?: any, headers?: Record<string, string>): void {
     this.info(`API Request: ${method} ${url}`, {
       method,
@@ -162,9 +135,6 @@ export class Logger {
     });
   }
 
-  /**
-   * Log API response
-   */
   logResponse(method: string, url: string, status: number, data?: any, duration?: number): void {
     this.info(`API Response: ${method} ${url} - ${status}`, {
       method,
@@ -175,9 +145,6 @@ export class Logger {
     });
   }
 
-  /**
-   * Log test start
-   */
   logTestStart(testName: string, metadata?: any): void {
     this.info(`Test Started: ${testName}`, {
       test: testName,
@@ -185,9 +152,6 @@ export class Logger {
     });
   }
 
-  /**
-   * Log test end
-   */
   logTestEnd(testName: string, status: 'passed' | 'failed' | 'skipped', duration?: number, error?: string): void {
     const level = status === 'failed' ? 'error' : 'info';
     this.log(level, `Test ${status.toUpperCase()}: ${testName}`, {
@@ -198,9 +162,6 @@ export class Logger {
     });
   }
 
-  /**
-   * Log performance metrics
-   */
   logPerformance(operation: string, duration: number, metadata?: any): void {
     this.info(`Performance: ${operation} took ${duration}ms`, {
       operation,
@@ -209,3 +170,6 @@ export class Logger {
     });
   }
 }
+
+export * from './circuit-breaker';
+export * from './test-data-loader';

@@ -1,8 +1,3 @@
-/**
- * Core API Types and Interfaces
- * Comprehensive type definitions for API requests, responses, and data models
- */
-
 // Base API Response Structure
 export interface BaseApiResponse {
   page?: number;
@@ -15,10 +10,7 @@ export interface BaseApiResponse {
   };
 }
 
-// HTTP Methods
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-
-// API Error Response
 export interface ApiErrorResponse {
   error: string;
   message?: string;
@@ -26,7 +18,6 @@ export interface ApiErrorResponse {
   timestamp?: string;
 }
 
-// User Related Types
 export interface User {
   id?: number;
   email?: string;
@@ -68,7 +59,6 @@ export interface SingleUserResponse {
   };
 }
 
-// Resource Related Types
 export interface Resource {
   id: number;
   name: string;
@@ -89,7 +79,6 @@ export interface SingleResourceResponse {
   };
 }
 
-// Authentication Types
 export interface LoginRequest {
   email: string;
   password: string;
@@ -109,16 +98,19 @@ export interface RegisterResponse {
   token: string;
 }
 
-// API Client Configuration
 export interface ApiClientConfig {
   baseURL: string;
   timeout?: number;
   retries?: number;
   retryDelay?: number;
   headers?: Record<string, string>;
+  circuitBreaker?: {
+    failureThreshold?: number;
+    recoveryTimeout?: number;
+    monitoringPeriod?: number;
+  };
 }
 
-// Request Configuration
 export interface RequestConfig {
   method: HttpMethod;
   url: string;
@@ -128,7 +120,6 @@ export interface RequestConfig {
   timeout?: number;
 }
 
-// Response Type
 export interface ApiResponse<T = any> {
   data: T;
   status: number;
@@ -137,13 +128,11 @@ export interface ApiResponse<T = any> {
   config: RequestConfig;
 }
 
-// Pagination Parameters
 export interface PaginationParams {
   page?: number;
   per_page?: number;
 }
 
-// Query Parameters
 export interface QueryParams extends PaginationParams {
   delay?: number;
   [key: string]: any;

@@ -1,15 +1,5 @@
-/**
- * Configuration Types
- * Type definitions for environment configuration and test settings
- */
-
-// Environment Types
 export type Environment = 'development' | 'staging' | 'production' | 'local';
-
-// Log Levels
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug' | 'verbose';
-
-// Test Environment Configuration
 export interface EnvironmentConfig {
   name: Environment;
   baseURL: string;
@@ -24,7 +14,6 @@ export interface EnvironmentConfig {
   };
 }
 
-// Logger Configuration
 export interface LoggerConfig {
   level: LogLevel;
   format: 'json' | 'simple' | 'combined';
@@ -35,7 +24,6 @@ export interface LoggerConfig {
   timestamp?: boolean;
 }
 
-// Test Configuration
 export interface TestConfig {
   parallel: boolean;
   workers: number;
@@ -48,7 +36,6 @@ export interface TestConfig {
   traceMode: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 }
 
-// Database Configuration (if needed for test data)
 export interface DatabaseConfig {
   host: string;
   port: number;
@@ -58,7 +45,6 @@ export interface DatabaseConfig {
   ssl?: boolean;
 }
 
-// Framework Configuration
 export interface FrameworkConfig {
   environment: EnvironmentConfig;
   logger: LoggerConfig;
@@ -66,7 +52,6 @@ export interface FrameworkConfig {
   database?: DatabaseConfig;
 }
 
-// Environment Variables Interface
 export interface EnvironmentVariables {
   NODE_ENV?: Environment;
   API_BASE_URL?: string;

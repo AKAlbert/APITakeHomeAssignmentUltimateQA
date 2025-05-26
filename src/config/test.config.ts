@@ -1,14 +1,6 @@
-/**
- * Test Configuration
- * Configuration settings for test execution and reporting
- */
-
 import { TestConfig } from '@/types';
 import { getCurrentEnvironment } from './environment.config';
 
-/**
- * Default test configurations for different environments
- */
 const testConfigs: Record<string, TestConfig> = {
   development: {
     parallel: true,
@@ -59,9 +51,6 @@ const testConfigs: Record<string, TestConfig> = {
   }
 };
 
-/**
- * Get test configuration for current environment
- */
 export const getTestConfig = (): TestConfig => {
   const environment = getCurrentEnvironment();
   const config = testConfigs[environment];
@@ -70,12 +59,11 @@ export const getTestConfig = (): TestConfig => {
     return testConfigs.development;
   }
 
-  // Override with environment variables if provided
   const envVars = {
     workers: process.env.TEST_WORKERS ? parseInt(process.env.TEST_WORKERS) : undefined,
     retries: process.env.TEST_RETRIES ? parseInt(process.env.TEST_RETRIES) : undefined,
     timeout: process.env.TEST_TIMEOUT ? parseInt(process.env.TEST_TIMEOUT) : undefined,
-    parallel: process.env.CI ? false : undefined // Disable parallel in CI if needed
+    parallel: process.env.CI ? false : undefined
   };
 
   return {
@@ -87,16 +75,12 @@ export const getTestConfig = (): TestConfig => {
   };
 };
 
-/**
- * Get reporter configuration based on environment
- */
 export const getReporterConfig = (): any[] => {
   const config = getTestConfig();
   const environment = getCurrentEnvironment();
 
   const reporters: any[] = [];
 
-  // Always include basic reporters
   if (config.reporter.includes('html')) {
     reporters.push(['html', {
       outputFolder: 'playwright-report',
@@ -123,9 +107,7 @@ export const getReporterConfig = (): any[] => {
   return reporters;
 };
 
-/**
- * Validate test configuration
- */
+// Validate test configuration parameters
 export const validateTestConfig = (config: TestConfig): boolean => {
   if (config.workers <= 0) {
     throw new Error('Workers must be greater than 0');
