@@ -248,13 +248,19 @@ jobs:
           # Set environment-specific API URLs
           if [ "${{ matrix.environment }}" = "development" ]; then
             echo "API_BASE_URL=${{ vars.API_BASE_URL_DEVELOPMENT || 'https://reqres.in' }}" >> $GITHUB_ENV
-            echo "API_KEY=${{ secrets.API_KEY_DEVELOPMENT }}" >> $GITHUB_ENV
+            # Only set API_KEY if not using reqres.in (free public API)
+            if [[ "${{ vars.API_BASE_URL_DEVELOPMENT || 'https://reqres.in' }}" != *"reqres.in"* ]]; then
+              echo "API_KEY=${{ secrets.API_KEY_DEVELOPMENT }}" >> $GITHUB_ENV
+            fi
           elif [ "${{ matrix.environment }}" = "staging" ]; then
             echo "API_BASE_URL=${{ vars.API_BASE_URL_STAGING || 'https://reqres.in' }}" >> $GITHUB_ENV
-            echo "API_KEY=${{ secrets.API_KEY_STAGING }}" >> $GITHUB_ENV
+            # Only set API_KEY if not using reqres.in (free public API)
+            if [[ "${{ vars.API_BASE_URL_STAGING || 'https://reqres.in' }}" != *"reqres.in"* ]]; then
+              echo "API_KEY=${{ secrets.API_KEY_STAGING }}" >> $GITHUB_ENV
+            fi
           else
             echo "API_BASE_URL=https://reqres.in" >> $GITHUB_ENV
-            echo "API_KEY=" >> $GITHUB_ENV
+            # No API_KEY needed for reqres.in
           fi
 
           # Set test-specific environment variables

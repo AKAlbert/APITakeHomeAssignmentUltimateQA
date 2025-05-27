@@ -95,15 +95,22 @@ export const getEnvironmentConfig = (env?: Environment): EnvironmentConfig => {
 
   const envVars = getEnvVars();
 
+  const finalBaseURL = envVars.API_BASE_URL || config.baseURL;
+
+  let apiKey = envVars.API_KEY || config.apiKey;
+  if (finalBaseURL.includes('reqres.in')) {
+    apiKey = 'reqres-free-v1';
+  }
+
   return {
     ...config,
-    baseURL: envVars.API_BASE_URL || config.baseURL,
-    apiKey: envVars.API_KEY || config.apiKey,
+    baseURL: finalBaseURL,
+    apiKey: apiKey,
     timeout: envVars.TEST_TIMEOUT ? parseInt(envVars.TEST_TIMEOUT) : config.timeout,
     retries: envVars.TEST_RETRIES ? parseInt(envVars.TEST_RETRIES) : config.retries,
     headers: {
       ...config.headers,
-      ...(envVars.API_KEY && { 'x-api-key': envVars.API_KEY })
+      ...(apiKey && { 'x-api-key': apiKey })
     }
   };
 };

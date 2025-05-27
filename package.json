@@ -6,9 +6,9 @@
   "scripts": {
     "test": "npx playwright test",
     "test:all": "npm run test:functional && npm run test:integration && npm run test:advanced",
-    "test:functional": "npx playwright test src/tests/functional --reporter=html",
-    "test:integration": "npx playwright test src/tests/integration --reporter=html",
-    "test:advanced": "npx playwright test src/tests/advanced --reporter=html",
+    "test:functional": "npx playwright test src/tests/functional",
+    "test:integration": "npx playwright test src/tests/integration",
+    "test:advanced": "npx playwright test src/tests/advanced",
     "test:parallel": "npx playwright test --workers=3",
     "test:debug": "npx playwright test --debug",
     "test:headed": "npx playwright test --headed",
