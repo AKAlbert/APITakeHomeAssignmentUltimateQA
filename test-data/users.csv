@@ -1,0 +1,16 @@
+name,job,email,expectedStatus,testType
+"John Doe",Software Engineer,john.doe@example.com,201,valid
+"Jane Smith",Product Manager,jane.smith@example.com,201,valid
+"Bob Johnson",QA Engineer,bob.johnson@example.com,201,valid
+"Alice Brown",DevOps Engineer,alice.brown@example.com,201,valid
+"Charlie Wilson",Data Scientist,charlie.wilson@example.com,201,valid
+"Diana Prince",UX Designer,diana.prince@example.com,201,valid
+"",Software Engineer,empty.name@example.com,400,invalid_name
+"Valid Name","",valid.name@example.com,400,invalid_job
+"Test User",Software Engineer,"",400,invalid_email
+"Very Long Name That Exceeds Normal Limits And Should Be Tested For Boundary Conditions",Engineer,long.name@example.com,201,boundary
+"Normal User",Software Engineer With Very Long Job Title That Tests Boundary Conditions,normal@example.com,201,boundary
+"Unicode User 测试",软件工程师,unicode@example.com,201,unicode
+"Special!@#$%^&*()User",Engineer!@#$%,special@example.com,201,special_chars
+"SQL'; DROP TABLE users; --",Hacker,sql.injection@example.com,201,security
+"<script>alert('xss')</script>",Web Developer,xss@example.com,201,security
