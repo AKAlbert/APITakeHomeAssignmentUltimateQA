@@ -257,6 +257,55 @@ jobs:
             echo "API_KEY=" >> $GITHUB_ENV
           fi
 
+          # Set test-specific environment variables
+          echo "TEST_TIMEOUT=30000" >> $GITHUB_ENV
+          echo "TEST_RETRIES=1" >> $GITHUB_ENV
+          echo "TEST_WORKERS=2" >> $GITHUB_ENV
+          echo "LOG_LEVEL=info" >> $GITHUB_ENV
+          echo "CI=true" >> $GITHUB_ENV
+          echo "CUSTOM_HEADER_VALUE=test-framework-v1" >> $GITHUB_ENV
+
+          # Set test user passwords (using default values for CI)
+          echo "TEST_USER_PASSWORD=testpassword123" >> $GITHUB_ENV
+          echo "TEST_ADMIN_PASSWORD=adminpassword123" >> $GITHUB_ENV
+          echo "TEST_AUTH_PASSWORD=cityslicka" >> $GITHUB_ENV
+          echo "TEST_AUTH_PASSWORD_ALT=pistol" >> $GITHUB_ENV
+          echo "TEST_INVALID_PASSWORD=invalid" >> $GITHUB_ENV
+          echo "TEST_INVALID_PASSWORD_SHORT=x" >> $GITHUB_ENV
+          echo "DEFAULT_TEST_VALUE=default" >> $GITHUB_ENV
+
+          # Set test data configuration
+          echo "TEST_DATA_SOURCE=file" >> $GITHUB_ENV
+          echo "TEST_DATA_PATH=./test-data" >> $GITHUB_ENV
+
+      - name: Verify Test Data Files
+        run: |
+          echo "Verifying test data files exist..."
+
+          # Check if test-data directory exists
+          if [ -d "test-data" ]; then
+            echo "✅ test-data directory found"
+            ls -la test-data/
+          else
+            echo "❌ test-data directory not found"
+            echo "Current directory contents:"
+            ls -la
+            exit 1
+          fi
+
+          # Check for required test data files
+          required_files=("users.csv" "auth-scenarios.json")
+          for file in "${required_files[@]}"; do
+            if [ -f "test-data/$file" ]; then
+              echo "✅ test-data/$file found"
+            else
+              echo "❌ test-data/$file not found"
+              exit 1
+            fi
+          done
+
+          echo "All test data files verified successfully"
+
       - name: Execute Test Suite
         id: test-execution
         run: |
