@@ -173,11 +173,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Install Dependencies
         run: |
-          npm ci --prefer-offline --no-audit
+          if [ -f "package-lock.json" ]; then
+            npm ci --prefer-offline --no-audit
+          else
+            npm install --prefer-offline --no-audit
+          fi
           npx playwright install --with-deps
 
       - name: Build Rollback Package
@@ -300,11 +303,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Install Dependencies
         run: |
-          npm ci --prefer-offline --no-audit
+          if [ -f "package-lock.json" ]; then
+            npm ci --prefer-offline --no-audit
+          else
+            npm install --prefer-offline --no-audit
+          fi
           npx playwright install --with-deps
 
       - name: Execute Post-Rollback Tests

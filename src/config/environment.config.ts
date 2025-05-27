@@ -27,8 +27,7 @@ const environments: Record<Environment, EnvironmentConfig> = {
     retryDelay: 1000,
     headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'x-api-key': 'reqres-free-v1'
+      'Content-Type': 'application/json'
     },
     rateLimit: {
       requests: 100,
@@ -44,8 +43,7 @@ const environments: Record<Environment, EnvironmentConfig> = {
     retryDelay: 2000,
     headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'x-api-key': 'reqres-staging-v1'
+      'Content-Type': 'application/json'
     },
     rateLimit: {
       requests: 200,
@@ -61,8 +59,7 @@ const environments: Record<Environment, EnvironmentConfig> = {
     retryDelay: 3000,
     headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'x-api-key': 'reqres-prod-v1'
+      'Content-Type': 'application/json'
     },
     rateLimit: {
       requests: 500,
@@ -91,13 +88,13 @@ export const getCurrentEnvironment = (): Environment => {
 export const getEnvironmentConfig = (env?: Environment): EnvironmentConfig => {
   const environment = env || getCurrentEnvironment();
   const config = environments[environment];
-  
+
   if (!config) {
     throw new Error(`Unknown environment: ${environment}`);
   }
 
   const envVars = getEnvVars();
-  
+
   return {
     ...config,
     baseURL: envVars.API_BASE_URL || config.baseURL,
@@ -113,7 +110,7 @@ export const getEnvironmentConfig = (env?: Environment): EnvironmentConfig => {
 
 export const validateEnvironmentConfig = (config: EnvironmentConfig): boolean => {
   const requiredFields = ['name', 'baseURL', 'timeout', 'retries', 'retryDelay'];
-  
+
   for (const field of requiredFields) {
     if (!config[field as keyof EnvironmentConfig]) {
       throw new Error(`Missing required configuration field: ${field}`);

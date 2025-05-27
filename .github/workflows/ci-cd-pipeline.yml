@@ -49,12 +49,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Generate Cache Key
         id: cache-key
         run: |
-          echo "key=node-modules-${{ env.CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}" >> $GITHUB_OUTPUT
+          if [ -f "package-lock.json" ]; then
+            echo "key=node-modules-${{ env.CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}" >> $GITHUB_OUTPUT
+          else
+            echo "key=node-modules-${{ env.CACHE_VERSION }}-${{ runner.os }}-${{ hashFiles('**/package.json') }}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Cache Dependencies
         uses: actions/cache@v4
@@ -69,7 +72,11 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm ci --prefer-offline --no-audit
+          if [ -f "package-lock.json" ]; then
+            npm ci --prefer-offline --no-audit
+          else
+            npm install --prefer-offline --no-audit
+          fi
           npx playwright install --with-deps
 
       - name: TypeScript Compilation
@@ -155,7 +162,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
@@ -255,7 +261,7 @@ jobs:
 
           for result_file in test-results/*-results.json; do
             if [ -f "$result_file" ]; then
-              # Parse test results 
+              # Parse test results
               echo "Analyzing: $result_file"
               total_tests=$((total_tests + 1))
             fi
@@ -411,7 +417,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
