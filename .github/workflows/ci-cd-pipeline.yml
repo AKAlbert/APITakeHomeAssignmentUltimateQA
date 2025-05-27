@@ -263,15 +263,30 @@ jobs:
           echo "Running ${{ matrix.test-suite }} tests in ${{ matrix.environment }} environment..."
           start_time=$(date +%s)
 
+          # Create test-results directory
+          mkdir -p test-results
+
           case "${{ matrix.test-suite }}" in
             "functional")
-              npm run test:functional -- --reporter=json --output-file=test-results/functional-results.json
+              npm run test:functional -- --reporter=json
+              # Copy the generated results.json to a specific name for this test suite
+              if [ -f "test-results/results.json" ]; then
+                cp test-results/results.json test-results/functional-results.json
+              fi
               ;;
             "integration")
-              npm run test:integration -- --reporter=json --output-file=test-results/integration-results.json
+              npm run test:integration -- --reporter=json
+              # Copy the generated results.json to a specific name for this test suite
+              if [ -f "test-results/results.json" ]; then
+                cp test-results/results.json test-results/integration-results.json
+              fi
               ;;
             "advanced")
-              npm run test:advanced -- --reporter=json --output-file=test-results/advanced-results.json
+              npm run test:advanced -- --reporter=json
+              # Copy the generated results.json to a specific name for this test suite
+              if [ -f "test-results/results.json" ]; then
+                cp test-results/results.json test-results/advanced-results.json
+              fi
               ;;
           esac
 
@@ -531,7 +546,7 @@ jobs:
           fi
 
           # Run critical path tests only
-          npm run test:functional -- --grep="@smoke" --reporter=json
+          npm run test:smoke
 
           echo "Smoke tests passed for ${{ matrix.environment }}"
 
