@@ -1,7 +1,5 @@
 import { TestUser, UserFixtures, TestFixture } from '@/types';
 
-// gitguardian:ignore
-/* eslint-disable-next-line */
 // This file contains test fixture data with placeholder passwords for testing purposes only
 // All actual passwords are loaded from environment variables
 export const validUsers: TestFixture<TestUser[]> = {
@@ -16,7 +14,7 @@ export const validUsers: TestFixture<TestUser[]> = {
       name: 'Eve Holt',
       job: 'Software Engineer',
       avatar: 'https://reqres.in/img/faces/4-image.jpg',
-      password: process.env.TEST_USER_PASSWORD || process.env.DEFAULT_TEST_VALUE || '' // gitguardian:ignore
+      password: process.env.TEST_USER_PASSWORD || process.env.DEFAULT_TEST_VALUE || ''
     },
     {
       email: 'charles.morris@reqres.in',
@@ -25,7 +23,7 @@ export const validUsers: TestFixture<TestUser[]> = {
       name: 'Charles Morris',
       job: 'Product Manager',
       avatar: 'https://reqres.in/img/faces/5-image.jpg',
-      password: process.env.TEST_USER_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_USER_PASSWORD || 'placeholder'
     },
     {
       email: 'tracey.ramos@reqres.in',
@@ -34,7 +32,7 @@ export const validUsers: TestFixture<TestUser[]> = {
       name: 'Tracey Ramos',
       job: 'UX Designer',
       avatar: 'https://reqres.in/img/faces/6-image.jpg',
-      password: process.env.TEST_USER_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_USER_PASSWORD || 'placeholder'
     }
   ]
 };
@@ -50,7 +48,7 @@ export const invalidUsers: TestFixture<TestUser[]> = {
       last_name: '',
       name: '',
       job: '',
-      password: process.env.TEST_INVALID_PASSWORD_SHORT || 'x' // gitguardian:ignore
+      password: process.env.TEST_INVALID_PASSWORD_SHORT || 'x'
     },
     {
       email: '',
@@ -58,7 +56,7 @@ export const invalidUsers: TestFixture<TestUser[]> = {
       last_name: 'Doe',
       name: 'John Doe',
       job: 'Developer',
-      password: '' // gitguardian:ignore
+      password: ''
     },
     {
       email: 'test@',
@@ -66,7 +64,7 @@ export const invalidUsers: TestFixture<TestUser[]> = {
       last_name: '',
       name: 'Jane',
       job: 'A'.repeat(101),
-      password: process.env.TEST_INVALID_PASSWORD_SHORT || 'x' // gitguardian:ignore
+      password: process.env.TEST_INVALID_PASSWORD_SHORT || 'x'
     }
   ]
 };
@@ -83,7 +81,7 @@ export const adminUsers: TestFixture<TestUser[]> = {
       name: 'Admin User',
       job: 'System Administrator',
       avatar: 'https://reqres.in/img/faces/admin.jpg',
-      password: process.env.TEST_ADMIN_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_ADMIN_PASSWORD || 'placeholder'
     },
     {
       email: 'superadmin@reqres.in',
@@ -92,7 +90,7 @@ export const adminUsers: TestFixture<TestUser[]> = {
       name: 'Super Admin',
       job: 'Super Administrator',
       avatar: 'https://reqres.in/img/faces/superadmin.jpg',
-      password: process.env.TEST_ADMIN_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_ADMIN_PASSWORD || 'placeholder'
     }
   ]
 };
@@ -109,7 +107,7 @@ export const regularUsers: TestFixture<TestUser[]> = {
       name: 'George Bluth',
       job: 'Business Analyst',
       avatar: 'https://reqres.in/img/faces/1-image.jpg',
-      password: process.env.TEST_USER_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_USER_PASSWORD || 'placeholder'
     },
     {
       email: 'janet.weaver@reqres.in',
@@ -118,7 +116,7 @@ export const regularUsers: TestFixture<TestUser[]> = {
       name: 'Janet Weaver',
       job: 'Marketing Specialist',
       avatar: 'https://reqres.in/img/faces/2-image.jpg',
-      password: process.env.TEST_USER_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_USER_PASSWORD || 'placeholder'
     },
     {
       email: 'emma.wong@reqres.in',
@@ -127,7 +125,7 @@ export const regularUsers: TestFixture<TestUser[]> = {
       name: 'Emma Wong',
       job: 'Data Scientist',
       avatar: 'https://reqres.in/img/faces/3-image.jpg',
-      password: process.env.TEST_USER_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_USER_PASSWORD || 'placeholder'
     }
   ]
 };
@@ -143,7 +141,7 @@ export const edgeCaseUsers: TestFixture<TestUser[]> = {
       last_name: 'B',
       name: 'A B',
       job: 'C',
-      password: process.env.TEST_USER_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_USER_PASSWORD || 'placeholder'
     },
     {
       email: 'very.long.email.address.for.testing@very-long-domain-name-for-testing.com',
@@ -151,7 +149,7 @@ export const edgeCaseUsers: TestFixture<TestUser[]> = {
       last_name: 'VeryLongLastNameForTesting',
       name: 'VeryLongFirstNameForTesting VeryLongLastNameForTesting',
       job: 'Very Long Job Title For Testing Purposes',
-      password: process.env.TEST_USER_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_USER_PASSWORD || 'placeholder'
     },
     {
       email: 'unicode.test@example.com',
@@ -159,7 +157,7 @@ export const edgeCaseUsers: TestFixture<TestUser[]> = {
       last_name: 'García-López',
       name: 'José García-López',
       job: 'Développeur Senior',
-      password: process.env.TEST_USER_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_USER_PASSWORD || 'placeholder'
     },
     {
       email: 'special.chars@example.com',
@@ -167,7 +165,7 @@ export const edgeCaseUsers: TestFixture<TestUser[]> = {
       last_name: "O'Connor-Smith",
       name: "John O'Connor-Smith Jr.",
       job: "Senior Software Engineer & Team Lead",
-      password: process.env.TEST_USER_PASSWORD || 'placeholder' // gitguardian:ignore
+      password: process.env.TEST_USER_PASSWORD || 'placeholder'
     }
   ]
 };
@@ -179,19 +177,19 @@ export const authTestUsers: TestFixture<TestUser[]> = {
   data: [
     {
       email: 'eve.holt@reqres.in',
-      password: process.env.TEST_AUTH_PASSWORD || 'placeholder', // gitguardian:ignore
+      password: process.env.TEST_AUTH_PASSWORD || 'placeholder',
       name: 'Eve Holt',
       job: 'QA Engineer'
     },
     {
       email: 'eve.holt@reqres.in',
-      password: process.env.TEST_AUTH_PASSWORD_ALT || 'placeholder', // gitguardian:ignore
+      password: process.env.TEST_AUTH_PASSWORD_ALT || 'placeholder',
       name: 'Eve Holt',
       job: 'QA Engineer'
     },
     {
       email: 'sydney@fife',
-      password: process.env.TEST_AUTH_PASSWORD_ALT || 'placeholder', // gitguardian:ignore
+      password: process.env.TEST_AUTH_PASSWORD_ALT || 'placeholder',
       name: 'Sydney Fife',
       job: 'Developer'
     }
@@ -240,7 +238,7 @@ export function getRandomInvalidUser(): TestUser {
 export function getUserForScenario(scenario: 'login_success' | 'login_failure' | 'register_success' | 'register_failure'): TestUser {
   const scenarioUsers: Record<string, TestUser> = {
     'login_success': authTestUsers.data[0],
-    'login_failure': { email: 'invalid@example.com', password: process.env.TEST_INVALID_PASSWORD || 'placeholder', name: 'Invalid User', job: 'None' }, // gitguardian:ignore
+    'login_failure': { email: 'invalid@example.com', password: process.env.TEST_INVALID_PASSWORD || 'placeholder', name: 'Invalid User', job: 'None' },
     'register_success': authTestUsers.data[1],
     'register_failure': authTestUsers.data[2]
   };
