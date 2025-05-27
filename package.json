@@ -18,6 +18,7 @@
     "report": "npx playwright show-report",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
+    "lint:fallback": "eslint src/**/*.ts --config .eslintrc.fallback.js",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf test-results playwright-report logs",
     "clean:all": "npm run clean && rm -rf node_modules package-lock.json",

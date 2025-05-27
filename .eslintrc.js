@@ -3,7 +3,6 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2022,
     sourceType: 'module',
-    project: './tsconfig.json',
   },
   plugins: ['@typescript-eslint'],
   extends: [
@@ -20,6 +19,7 @@ module.exports = {
     'test-results/',
     'playwright-report/',
     'logs/',
+    'dist/',
     '*.js'
   ],
   rules: {
@@ -29,14 +29,14 @@ module.exports = {
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-non-null-assertion': 'warn',
-    
+
     // General rules
     'no-console': 'off', // Allow console.log for test output
     'prefer-const': 'error',
     'no-var': 'error',
     'object-shorthand': 'error',
     'prefer-template': 'error',
-    
+
     // Import rules
     'sort-imports': ['error', {
       'ignoreCase': false,

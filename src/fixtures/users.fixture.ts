@@ -46,7 +46,7 @@ export const invalidUsers: TestFixture<TestUser[]> = {
       last_name: '',
       name: '',
       job: '',
-      password: '123'
+      password: process.env.TEST_INVALID_PASSWORD_SHORT || 'inv'
     },
     {
       email: '',
@@ -62,7 +62,7 @@ export const invalidUsers: TestFixture<TestUser[]> = {
       last_name: '',
       name: 'Jane',
       job: 'A'.repeat(101),
-      password: 'ab'
+      password: process.env.TEST_INVALID_PASSWORD_SHORT || 'inv'
     }
   ]
 };
