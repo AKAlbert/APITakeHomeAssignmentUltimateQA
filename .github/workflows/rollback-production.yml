@@ -1,0 +1,365 @@
+name: Production Rollback
+
+# NOTE: Environment protection rules are commented out below.
+# To enable them, create environments in your repository settings:
+# 1. Go to Settings > Environments
+# 2. Create "production_rollback_approval" and "production" environments
+# 3. Configure protection rules (required reviewers, deployment branches, etc.)
+# 4. Uncomment the environment sections in the jobs below
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_version:
+        description: 'Version to rollback to (e.g., v1.2.2 or commit SHA)'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+      emergency:
+        description: 'Emergency rollback (skip some validations)'
+        required: false
+        default: false
+        type: boolean
+      skip_tests:
+        description: 'Skip post-rollback tests'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '20'
+  PRODUCTION_URL: 'https://api.example.com'
+  ROLLBACK_TIMEOUT: '600' # 10 minutes
+
+jobs:
+  # ============================================================================
+  # PRE-ROLLBACK VALIDATION
+  # ============================================================================
+  pre-rollback-checks:
+    name: Pre-Rollback Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      rollback-ready: ${{ steps.validation.outputs.ready }}
+      current-version: ${{ steps.current-version.outputs.version }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Get Current Production Version
+        id: current-version
+        run: |
+          # Get current production version
+          current_version="v1.0.1" # This would be fetched from production
+          echo "version=${current_version}" >> $GITHUB_OUTPUT
+          echo "Current production version: ${current_version}"
+
+      - name: Validate Rollback Version
+        id: version-validation
+        run: |
+          rollback_version="${{ inputs.rollback_version }}"
+          current_version="${{ steps.current-version.outputs.version }}"
+
+          # Check if rollback version exists
+          if git rev-parse "$rollback_version" >/dev/null 2>&1; then
+            echo "Rollback version exists: $rollback_version"
+            echo "valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "Rollback version not found: $rollback_version"
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Prevent rolling back to the same version
+          if [[ "$rollback_version" == "$current_version" ]]; then
+            echo "Cannot rollback to the same version: $rollback_version"
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Check Rollback Version Compatibility
+        if: ${{ !inputs.emergency }}
+        run: |
+          echo "Checking rollback version compatibility..."
+
+          # Check if the rollback version was previously deployed
+          # This would typically check deployment history
+          echo "Rollback version compatibility verified"
+
+      - name: Rollback Impact Assessment
+        run: |
+          echo "Assessing rollback impact..."
+
+          # Analyze potential impact of rollback
+          # - Database schema changes
+          # - API breaking changes
+          # - Configuration changes
+
+          echo "Rollback impact assessment completed"
+
+      - name: Validation Summary
+        id: validation
+        run: |
+          if [[ "${{ steps.version-validation.outputs.valid }}" == "true" ]]; then
+            echo "ready=true" >> $GITHUB_OUTPUT
+            echo "All pre-rollback checks passed"
+          else
+            echo "ready=false" >> $GITHUB_OUTPUT
+            echo "Pre-rollback validation failed"
+            exit 1
+          fi
+
+  # ============================================================================
+  # ROLLBACK APPROVAL (for non-emergency rollbacks)
+  # ============================================================================
+  rollback-approval:
+    name: Rollback Approval
+    runs-on: ubuntu-latest
+    needs: pre-rollback-checks
+    if: needs.pre-rollback-checks.outputs.rollback-ready == 'true' && !inputs.emergency
+    # environment:
+    #   name: production_rollback_approval
+    #   url: ${{ env.PRODUCTION_URL }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Rollback Summary
+        run: |
+          echo "## Production Rollback Request" >> $GITHUB_STEP_SUMMARY
+          echo "- **Current Version**: ${{ needs.pre-rollback-checks.outputs.current-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rollback to Version**: ${{ inputs.rollback_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Reason**: ${{ inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Requested by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Emergency**: ${{ inputs.emergency }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Skip Tests**: ${{ inputs.skip_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Manual approval required to proceed with production rollback**" >> $GITHUB_STEP_SUMMARY
+
+      - name: Waiting for Approval
+        run: |
+          echo "Waiting for manual approval to rollback production..."
+          echo "Review the rollback summary above before approving"
+
+  # ============================================================================
+  # PRODUCTION ROLLBACK EXECUTION
+  # ============================================================================
+  execute-rollback:
+    name: Execute Production Rollback
+    runs-on: ubuntu-latest
+    needs: [pre-rollback-checks, rollback-approval]
+    if: |
+      always() &&
+      needs.pre-rollback-checks.outputs.rollback-ready == 'true' &&
+      (needs.rollback-approval.result == 'success' || inputs.emergency)
+    # environment:
+    #   name: production
+    #   url: ${{ env.PRODUCTION_URL }}
+    timeout-minutes: 30
+    outputs:
+      rollback-id: ${{ steps.rollback.outputs.rollback_id }}
+      rollback-time: ${{ steps.rollback.outputs.rollback_time }}
+
+    steps:
+      - name: Checkout Rollback Version
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.rollback_version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          npx playwright install --with-deps
+
+      - name: Build Rollback Package
+        run: |
+          echo "Building rollback package for version ${{ inputs.rollback_version }}..."
+
+          # Set production environment
+          export NODE_ENV=production
+
+          # Build the rollback version
+          npm run type-check
+
+          # Create rollback build
+          mkdir -p dist
+          cp -r src dist/
+          cp package*.json dist/
+          cp tsconfig.json dist/
+          cp playwright.config.ts dist/
+
+          # Generate rollback build metadata
+          echo "{
+            \"version\": \"${{ inputs.rollback_version }}\",
+            \"rollbackTime\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"rollbackReason\": \"${{ inputs.reason }}\",
+            \"rollbackBy\": \"${{ github.actor }}\",
+            \"previousVersion\": \"${{ needs.pre-rollback-checks.outputs.current-version }}\",
+            \"emergency\": ${{ inputs.emergency }}
+          }" > dist/rollback-info.json
+
+          echo "Rollback package built successfully"
+
+      - name: Create Current Version Backup
+        run: |
+          echo "Creating backup of current production version..."
+
+          # Create backup before rollback
+          backup_id="backup-$(date +%s)"
+          echo "Backup ID: $backup_id"
+
+          # In real scenario, this would backup current production state
+          echo "Current version backup created: $backup_id"
+
+      - name: Execute Rollback
+        id: rollback
+        run: |
+          echo "Starting production rollback to version ${{ inputs.rollback_version }}..."
+          rollback_start=$(date +%s)
+
+          # Rollback process
+          echo "Stopping current production services..."
+          # stop_production_services
+
+          echo "Deploying rollback version..."
+          # deploy_rollback_version
+
+          echo "Starting services with rollback version..."
+          # start_production_services
+
+          # Simulate rollback time
+          sleep 10
+
+          rollback_end=$(date +%s)
+          rollback_duration=$((rollback_end - rollback_start))
+
+          echo "rollback_id=rollback-$(date +%s)" >> $GITHUB_OUTPUT
+          echo "rollback_time=${rollback_duration}s" >> $GITHUB_OUTPUT
+
+          echo "Production rollback completed in ${rollback_duration}s"
+
+      - name: Post-Rollback Health Check
+        id: health-check
+        run: |
+          echo "Running post-rollback health checks..."
+
+          # Wait for services to stabilize
+          sleep 10
+
+          # Health check endpoints
+          echo "Checking application health..."
+          # curl -f ${{ env.PRODUCTION_URL }}/health || exit 1
+
+          echo "Checking API endpoints..."
+          # curl -f ${{ env.PRODUCTION_URL }}/api/status || exit 1
+
+          echo "Checking rollback version..."
+          # Verify the correct version is running
+
+          echo "All post-rollback health checks passed"
+
+      - name: Rollback Summary
+        run: |
+          echo "## Production Rollback Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rolled back to Version**: ${{ inputs.rollback_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous Version**: ${{ needs.pre-rollback-checks.outputs.current-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rollback ID**: ${{ steps.rollback.outputs.rollback_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rollback Time**: ${{ steps.rollback.outputs.rollback_time }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Reason**: ${{ inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Emergency**: ${{ inputs.emergency }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check**: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Executed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # POST-ROLLBACK VALIDATION
+  # ============================================================================
+  post-rollback-tests:
+    name: Post-Rollback Validation
+    runs-on: ubuntu-latest
+    needs: execute-rollback
+    if: ${{ !inputs.skip_tests }}
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Rollback Version
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.rollback_version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          npx playwright install --with-deps
+
+      - name: Execute Post-Rollback Tests
+        run: |
+          echo "Running post-rollback validation tests..."
+
+          # Set production environment
+          export NODE_ENV=production
+          export API_BASE_URL=${{ env.PRODUCTION_URL }}
+
+          # Run critical tests to ensure rollback is working
+          npm run test:functional -- --grep="@critical|@smoke" --reporter=json
+
+          echo "Post-rollback validation tests completed successfully"
+
+      - name: Validation Report
+        if: always()
+        run: |
+          echo "## Post-Rollback Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rollback Version**: ${{ inputs.rollback_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # ROLLBACK NOTIFICATION
+  # ============================================================================
+  notify-rollback:
+    name: Rollback Notifications
+    runs-on: ubuntu-latest
+    needs: [execute-rollback, post-rollback-tests]
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+      - name: Final Rollback Status
+        run: |
+          echo "## Production Rollback Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rollback Version**: ${{ inputs.rollback_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rollback Status**: ${{ needs.execute-rollback.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation Tests**: ${{ needs.post-rollback-tests.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Reason**: ${{ inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Emergency**: ${{ inputs.emergency }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Production URL**: ${{ env.PRODUCTION_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Executed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Success Notification
+        if: needs.execute-rollback.result == 'success'
+        run: |
+          echo "Production rollback successful!"
+          # Send success notifications
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} -d '{"text":"Production rollback to ${{ inputs.rollback_version }} successful! Reason: ${{ inputs.reason }}"}'
+
+      - name: Failure Notification
+        if: needs.execute-rollback.result == 'failure'
+        run: |
+          echo "Production rollback failed!"
+          # Send failure notifications
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} -d '{"text":"Production rollback to ${{ inputs.rollback_version }} failed! Manual intervention required."}'

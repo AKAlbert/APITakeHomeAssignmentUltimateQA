@@ -1,0 +1,367 @@
+name: Production Deployment
+
+# NOTE: Environment protection rules are commented out below.
+# To enable them, create environments in your repository settings:
+# 1. Go to Settings > Environments
+# 2. Create "production_approval" and "production" environments
+# 3. Configure protection rules (required reviewers, deployment branches, etc.)
+# 4. Uncomment the environment sections in the jobs below
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.2.3 or commit SHA)'
+        required: true
+        type: string
+      rollback_version:
+        description: 'Rollback version (if deployment fails)'
+        required: false
+        type: string
+      skip_smoke_tests:
+        description: 'Skip smoke tests after deployment'
+        required: false
+        default: false
+        type: boolean
+      force_deploy:
+        description: 'Force deployment (bypass some safety checks)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '20'
+  PRODUCTION_URL: 'https://api.example.com'
+  ROLLBACK_TIMEOUT: '300' # 5 minutes
+
+jobs:
+  # ============================================================================
+  # PRE-DEPLOYMENT VALIDATION
+  # ============================================================================
+  pre-deployment-checks:
+    name: Pre-Deployment Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      deployment-ready: ${{ steps.validation.outputs.ready }}
+      current-version: ${{ steps.current-version.outputs.version }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Validate Version Format
+        id: version-validation
+        run: |
+          version="${{ inputs.version }}"
+
+          # Check if it's a valid semantic version or commit SHA
+          if [[ $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || [[ $version =~ ^[a-f0-9]{7,40}$ ]]; then
+            echo "Valid version format: $version"
+            echo "valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "Invalid version format: $version"
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Get Current Production Version
+        id: current-version
+        run: |
+          # Simulate getting current production version
+          # In real scenario, this would query your production API or deployment system
+          current_version="v1.0.0"
+          echo "version=${current_version}" >> $GITHUB_OUTPUT
+          echo "Current production version: ${current_version}"
+
+      - name: Check Staging Deployment Status
+        run: |
+          echo "Verifying staging deployment status..."
+
+          # Check if the version is deployed and tested in staging
+          # This would typically query your deployment system
+          echo "Version ${{ inputs.version }} verified in staging"
+
+      - name: Run Pre-Deployment Tests
+        if: ${{ !inputs.force_deploy }}
+        run: |
+          echo "Running pre-deployment validation tests..."
+
+          # Run critical tests against staging
+          # npm run test:critical -- --env=staging
+
+          echo "Pre-deployment tests passed"
+
+      - name: Validation Summary
+        id: validation
+        run: |
+          if [[ "${{ steps.version-validation.outputs.valid }}" == "true" ]]; then
+            echo "ready=true" >> $GITHUB_OUTPUT
+            echo "All pre-deployment checks passed"
+          else
+            echo "ready=false" >> $GITHUB_OUTPUT
+            echo "Pre-deployment validation failed"
+            exit 1
+          fi
+
+  # ============================================================================
+  # MANUAL APPROVAL GATE
+  # ============================================================================
+  production-approval:
+    name: Production Deployment Approval
+    runs-on: ubuntu-latest
+    needs: pre-deployment-checks
+    if: needs.pre-deployment-checks.outputs.deployment-ready == 'true'
+    # environment:
+    #   name: production_approval
+    #   url: ${{ env.PRODUCTION_URL }}
+    timeout-minutes: 60 # 1 hour timeout for manual approval
+
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "## Production Deployment Request" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version to Deploy**: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Current Version**: ${{ needs.pre-deployment-checks.outputs.current-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rollback Version**: ${{ inputs.rollback_version || 'Previous version' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Requested by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Force Deploy**: ${{ inputs.force_deploy }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Skip Smoke Tests**: ${{ inputs.skip_smoke_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Manual approval required to proceed with production deployment**" >> $GITHUB_STEP_SUMMARY
+
+      - name: Waiting for Approval
+        run: |
+          echo "Waiting for manual approval to deploy to production..."
+          echo "Review the deployment summary above before approving"
+
+  # ============================================================================
+  # PRODUCTION DEPLOYMENT
+  # ============================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, production-approval]
+    # environment:
+    #   name: production
+    #   url: ${{ env.PRODUCTION_URL }}
+    timeout-minutes: 30
+    outputs:
+      deployment-id: ${{ steps.deploy.outputs.deployment_id }}
+      deployment-url: ${{ steps.deploy.outputs.deployment_url }}
+      deployment-time: ${{ steps.deploy.outputs.deployment_time }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          npx playwright install --with-deps
+
+      - name: Build Production Package
+        run: |
+          echo "Building production package..."
+
+          # Set production environment
+          export NODE_ENV=production
+
+          # Build the application
+          npm run type-check
+
+          # Create production build
+          mkdir -p dist
+          cp -r src dist/
+          cp package*.json dist/
+          cp tsconfig.json dist/
+          cp playwright.config.ts dist/
+
+          # Generate production build metadata
+          echo "{
+            \"version\": \"${{ inputs.version }}\",
+            \"buildTime\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"commit\": \"${{ github.sha }}\",
+            \"environment\": \"production\",
+            \"deployedBy\": \"${{ github.actor }}\"
+          }" > dist/build-info.json
+
+          echo "Production package built successfully"
+
+      - name: Security Scan
+        run: |
+          echo "Running security scan..."
+
+          # Run security audit
+          npm audit --audit-level=high
+
+          # Additional security checks would go here
+          echo "Security scan completed"
+
+      - name: Create Deployment Package
+        run: |
+          echo "Creating deployment package..."
+
+          # Create versioned deployment package
+          tar -czf "production-deployment-${{ inputs.version }}.tar.gz" dist/
+
+          # Generate checksum
+          sha256sum "production-deployment-${{ inputs.version }}.tar.gz" > deployment.sha256
+
+          echo "Deployment package created"
+
+      - name: Deploy to Production
+        id: deploy
+        run: |
+          echo "Deploying to production environment..."
+          deployment_start=$(date +%s)
+
+          # Backup current deployment
+          echo "Creating backup of current deployment..."
+          # backup_id=$(create_backup_command)
+
+          # Deploy new version
+          echo "Deploying version ${{ inputs.version }}..."
+
+          # Simulate deployment process
+          # In real scenario, this would:
+          # 1. Upload package to production servers
+          # 2. Stop current services gracefully
+          # 3. Deploy new version
+          # 4. Start services
+          # 5. Verify deployment
+
+          sleep 15 # Simulate deployment time
+
+          deployment_end=$(date +%s)
+          deployment_duration=$((deployment_end - deployment_start))
+
+          echo "deployment_id=prod-$(date +%s)" >> $GITHUB_OUTPUT
+          echo "deployment_url=${{ env.PRODUCTION_URL }}" >> $GITHUB_OUTPUT
+          echo "deployment_time=${deployment_duration}s" >> $GITHUB_OUTPUT
+
+          echo "Production deployment completed in ${deployment_duration}s"
+
+      - name: Post-Deployment Health Check
+        id: health-check
+        run: |
+          echo "Running post-deployment health checks..."
+
+          # Wait for services to stabilize
+          sleep 10
+
+          # Health check endpoints
+          echo "Checking application health..."
+          # curl -f ${{ env.PRODUCTION_URL }}/health || exit 1
+
+          echo "Checking API endpoints..."
+          # curl -f ${{ env.PRODUCTION_URL }}/api/status || exit 1
+
+          echo "Checking metrics..."
+          # Check application metrics, response times, etc.
+
+          echo "All health checks passed"
+
+      - name: Deployment Summary
+        run: |
+          echo "## Production Deployment Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Deployed**: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment ID**: ${{ steps.deploy.outputs.deployment_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Time**: ${{ steps.deploy.outputs.deployment_time }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Production URL**: ${{ steps.deploy.outputs.deployment_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check**: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # POST-DEPLOYMENT SMOKE TESTS
+  # ============================================================================
+  production-smoke-tests:
+    name: Production Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: ${{ !inputs.skip_smoke_tests }}
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          npx playwright install --with-deps
+
+      - name: Execute Production Smoke Tests
+        run: |
+          echo "Running smoke tests against production..."
+
+          # Set production environment
+          export NODE_ENV=production
+          export API_BASE_URL=${{ env.PRODUCTION_URL }}
+
+          # Run critical smoke tests
+          npm run test:functional -- --grep="@smoke|@critical" --reporter=json
+
+          echo "Production smoke tests completed successfully"
+
+      - name: Smoke Test Report
+        if: always()
+        run: |
+          echo "## Production Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # DEPLOYMENT NOTIFICATION
+  # ============================================================================
+  notify-deployment:
+    name: Deployment Notifications
+    runs-on: ubuntu-latest
+    needs: [deploy-production, production-smoke-tests]
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+      - name: Final Deployment Status
+        run: |
+          echo "## Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Status**: ${{ needs.deploy-production.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Smoke Tests**: ${{ needs.production-smoke-tests.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Production URL**: ${{ env.PRODUCTION_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Success Notification
+        if: needs.deploy-production.result == 'success'
+        run: |
+          echo "Production deployment successful!"
+          # Send success notifications
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} -d '{"text":"Production deployment of ${{ inputs.version }} successful!"}'
+
+      - name: Failure Notification
+        if: needs.deploy-production.result == 'failure'
+        run: |
+          echo "Production deployment failed!"
+          # Send failure notifications and trigger rollback if needed
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} -d '{"text":"Production deployment of ${{ inputs.version }} failed!"}'

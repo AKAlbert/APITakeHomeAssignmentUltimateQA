@@ -1,8 +1,8 @@
 # Enterprise API Testing Framework for reqres.in
 
-A comprehensive, scalable API testing framework built with TypeScript, Playwright, and enterprise-grade patterns. This framework demonstrates professional-grade API testing capabilities with 15+ comprehensive test cases covering functional, integration, and advanced testing scenarios.
+A comprehensive, scalable API testing framework built with TypeScript, Playwright, and enterprise-grade patterns. This framework demonstrates professional-grade API testing capabilities with 15+ comprehensive test cases covering functional, integration, and advanced testing scenarios as in the technical document provided.
 
-## 🎯 **Framework Requirements Coverage**
+##  **Framework Requirements Coverage**
 
 ### **1. Framework Architecture & Design (1.5 hours)**
 ✅ **Scalable project structure and organization**
@@ -44,45 +44,45 @@ A comprehensive, scalable API testing framework built with TypeScript, Playwrigh
 - Environment-specific test data
 - Test isolation and data independence
 
-## 🚀 Features
+##  Features
 
-### ✨ **Scalable Architecture**
+###  **Scalable Architecture**
 - **Modular Design**: Clear separation of concerns with dedicated modules for clients, data, configuration, and utilities
 - **TypeScript First**: Comprehensive type safety with detailed interfaces and type definitions for reqres.in API
 - **Reusable Components**: API clients, data factories, and utilities designed for maximum reusability
 - **Circuit Breaker Pattern**: Resilience against service failures and cascading failures
 
-### 🔧 **API Client Management**
+###  **API Client Management**
 - **Base API Client**: Common functionality with retry logic, error handling, and logging
 - **Specialized Clients**: Dedicated clients for Users, Authentication, and Resources
 - **Request/Response Interceptors**: Built-in logging and performance monitoring
 - **Automatic Retries**: Configurable retry mechanisms with exponential backoff
 
-### 🌍 **Environment Management**
+###  **Environment Management**
 - **Multi-Environment Support**: Development, staging, production, and local configurations
 - **Dynamic Configuration**: Environment-specific settings with override capabilities
 - **Secure Credential Management**: Environment variable-based configuration
 - **Validation**: Built-in configuration validation and error handling
 
-### 📊 **Test Data Management**
+###  **Test Data Management**
 - **Data Factories**: Generate realistic test data using Faker.js
 - **Test Fixtures**: Static test data for consistent scenarios
 - **Data Tracking**: Automatic tracking and cleanup of created test data
 - **Edge Case Support**: Specialized data generators for boundary testing
 
-### 📈 **Logging & Reporting**
+###  **Logging & Reporting**
 - **Structured Logging**: Winston-based logging with multiple levels and formats
 - **Custom Reporters**: Enhanced test reporting with API-specific metrics
 - **Performance Tracking**: Response time monitoring and performance analytics
 - **Multiple Formats**: JSON, HTML, and console reporting options
 
-### 🧪 **Testing Utilities**
+###  **Testing Utilities**
 - **Enhanced Test Fixtures**: Extended Playwright test context with API utilities
 - **Response Validation**: Automated validation of API response structures
 - **Performance Testing**: Built-in load testing and performance measurement tools
 - **Cleanup Management**: Automatic test data cleanup and resource management
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 src/
@@ -142,7 +142,7 @@ test-data/                # External test data files
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone git@github.com:AKAlbert/APITakeHomeAssignmentUltimateQA.git
    cd APITakeHomeAssignmentUltimateQA
    ```
 
@@ -163,7 +163,7 @@ test-data/                # External test data files
    # Default configuration targets reqres.in API
    ```
 
-## 🚀 Running Tests
+##  Running Tests
 
 ### **Run All Tests (15+ Test Cases)**
 ```bash
@@ -197,7 +197,7 @@ npm run test:debug
 npm run test:trace
 ```
 
-## 📊 Test Coverage Summary
+##  Test Coverage Summary
 
 | **Category** | **Test Cases** | **Coverage** |
 |--------------|----------------|--------------|
@@ -206,7 +206,7 @@ npm run test:trace
 | **C. Advanced Patterns** | 4+ | Data-driven testing, parallel execution, security testing, API contracts |
 | **Total** | **15+** | **Complete reqres.in API coverage** |
 
-## 🏗️ Framework Architecture Highlights
+##  Framework Architecture Highlights
 
 ### **Circuit Breaker Pattern**
 ```typescript
@@ -238,7 +238,7 @@ logger.info('API request started', { method: 'POST', endpoint: '/api/users' });
 logger.logPerformance('User creation', 250, { userId: 123 });
 ```
 
-## 🔧 Key Features Demonstrated
+##  Key Features Demonstrated
 
 ### **1. Framework Architecture & Design**
 - ✅ Scalable project structure with clear separation of concerns
@@ -260,7 +260,7 @@ logger.logPerformance('User creation', 250, { userId: 123 });
 - ✅ Test data factories and cleanup mechanisms
 - ✅ Test isolation and data independence
 
-## 📈 Performance & Reliability
+##  Performance & Reliability
 
 - **Circuit Breaker**: Prevents cascading failures with configurable thresholds
 - **Retry Logic**: Automatic retry with exponential backoff for transient failures
@@ -268,14 +268,14 @@ logger.logPerformance('User creation', 250, { userId: 123 });
 - **Performance Monitoring**: Built-in response time tracking and metrics
 - **Resource Management**: Automatic cleanup of test data and resources
 
-## 🛡️ Security Testing
+##  Security Testing
 
 - **Input Validation**: SQL injection and XSS prevention testing
 - **Authentication**: Token-based authentication flow validation
 - **Authorization**: Protected endpoint access verification
 - **Data Sanitization**: Input sanitization and output encoding validation
 
-## 📋 Test Reports
+##  Test Reports
 
 After running tests, view detailed reports:
 ```bash
@@ -289,7 +289,7 @@ Reports include:
 - Test data usage and cleanup status
 - Error logs and debugging information
 
-## 🤝 Contributing
+##  Contributing
 
 This framework demonstrates enterprise-grade API testing practices including:
 - Professional project structure and organization
@@ -297,7 +297,3 @@ This framework demonstrates enterprise-grade API testing practices including:
 - Advanced testing patterns and data-driven approaches
 - Quality assurance and reliability features
 - Security testing and API contract validation
-
-## 📄 License
-
-MIT License - See LICENSE file for details.

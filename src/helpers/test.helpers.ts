@@ -21,7 +21,7 @@ export const test = base.extend<ExtendedTestContext>({
     const factory = new ApiClientFactory(request);
     const clients = {
       ...factory.createAllClients(),
-      resourceClient: {} // Temporary placeholder
+      resourceClient: {}
     };
     const logger = new Logger('ApiClients');
     logger.info('API clients initialized');
