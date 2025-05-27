@@ -204,6 +204,12 @@ jobs:
             echo "API_KEY=" >> $GITHUB_ENV
           fi
 
+      - name: Install Playwright Browsers
+        run: |
+          echo "Installing Playwright browsers for test execution..."
+          npx playwright install --with-deps
+          echo "Playwright browsers installed successfully"
+
       - name: Execute Test Suite
         id: test-execution
         run: |
@@ -441,6 +447,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-${{ github.sha }}
+
+      - name: Install Playwright Browsers
+        run: |
+          echo "Installing Playwright browsers for smoke tests..."
+          npx playwright install --with-deps
+          echo "Playwright browsers installed successfully"
 
       - name: Execute Smoke Tests
         if: |
