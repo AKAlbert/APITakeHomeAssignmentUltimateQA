@@ -1,4 +1,4 @@
-# APITakeHomeAssignmentUltimateQA - UltimateQA Take Home Assignment
+# AdvancedPlaywrightTypescript
 
 A comprehensive, scalable API testing framework built with TypeScript, Playwright, and enterprise-grade patterns. This framework demonstrates professional-grade API testing capabilities with 15+ comprehensive test cases covering functional, integration, and advanced testing scenarios as in the technical document provided.
 
